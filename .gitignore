@@ -1,0 +1,9 @@
+envs/dev/.terraform.lock.hcl
+envs/dev/terraform.tfstate
+envs/dev/.terraform/
+envs/dev/global-logic-key.pem
+
+remote-state/.terraform.lock.hcl
+remote-state/terraform.tfstate
+remote-state/.terraform/
+remote-state/terraform.tfstate.backup

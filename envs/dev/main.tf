@@ -1,3 +1,7 @@
+
+# ================================================================
+# Networking: VPC, Subnets, NAT Gateways, Routes
+
 module "vpc" {
   source                    = "github.com/Coalfire-CF/terraform-aws-vpc-nfw"
   cidr                      = "10.1.0.0/16"
@@ -15,7 +19,6 @@ module "vpc" {
   }
 }
 
-
 resource "aws_eip" "nat_az1" {
   tags = {
     Name = "global-logic-nat-eip-az1"
@@ -24,7 +27,7 @@ resource "aws_eip" "nat_az1" {
 
 resource "aws_nat_gateway" "nat_az1" {
   allocation_id = aws_eip.nat_az1.id
-  subnet_id     = module.vpc.public_subnets["-public-us-east-1a"]# Primer subnet pública (us-east-1a)
+  subnet_id     = module.vpc.public_subnets["-public-us-east-1a"] # First public subnet (us-east-1a)
   tags = {
     Name = "global-logic-nat-az1"
   }
@@ -45,20 +48,21 @@ resource "aws_nat_gateway" "nat_az2" {
 }
 
 resource "aws_route" "private_nat_az1" {
-  route_table_id         = module.vpc.private_route_table_ids[0] # Primer AZ privada
+  route_table_id         = module.vpc.private_route_table_ids[0] # First private AZ
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.nat_az1.id
 }
 
 resource "aws_route" "private_nat_az2" {
-  route_table_id         = module.vpc.private_route_table_ids[1] # Segunda AZ privada
+  route_table_id         = module.vpc.private_route_table_ids[1] # Second private AZ
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.nat_az2.id
 }
+# ================================================================
 
 
-
-
+# ================================================================
+# Security Groups
 resource "aws_security_group" "alb" {
   name        = "alb-sg"
   description = "Allow HTTP inbound from the world"
@@ -108,7 +112,7 @@ resource "aws_security_group" "ec2" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip] # Cambialo por tu IP real
+    cidr_blocks = [var.my_ip] # Replace with your real IP
   }
 
   ingress {
@@ -125,8 +129,10 @@ resource "aws_security_group" "ec2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+# ================================================================
 
-
+# ================================================================
+# S3 Buckets and Lifecycle Policies
 
 resource "aws_s3_bucket" "images" {
   bucket = "global-logic-images"
@@ -186,8 +192,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   }
 }
 
+# ================================================================
 
-# --- IAM Roles & Policies ---
+# ================================================================
+# IAM Roles, Policies and Instance Profiles
+
 resource "aws_iam_role" "ec2_logs" {
   name               = "ec2-logs-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
@@ -240,13 +249,17 @@ data "aws_iam_policy_document" "read_images" {
   }
 }
 
-# --- Instance Profile (para ambos: ASG y EC2) ---
+
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "ec2-profile"
   role = aws_iam_role.ec2_logs.name
 }
+# ================================================================
 
 
+
+# ================================================================
+# Application Load Balancer (ALB) and Target Group
 
 
 module "alb" {
@@ -294,8 +307,11 @@ resource "aws_lb_listener" "main" {
 
   }
 }
+# ================================================================
 
 
+# ================================================================
+# AMI Data Source
 data "aws_ami" "rhel" {
   most_recent = true
   owners      = ["309956199498"] # Red Hat official
@@ -305,11 +321,13 @@ data "aws_ami" "rhel" {
     values = ["RHEL-8.?*_HVM-*-x86_64-*"]
   }
 }
+# ================================================================
 
 
 
 
-
+# ================================================================
+# Autoscaling Group (ASG)
 
 module "asg" {
   source  = "terraform-aws-modules/autoscaling/aws"
@@ -337,7 +355,11 @@ module "asg" {
     Name = "asg-instance"
   }
 }
+# ================================================================
 
+
+# ================================================================
+# SSH Key Pair
 
 resource "tls_private_key" "ec2_key" {
   algorithm = "RSA"
@@ -356,6 +378,11 @@ resource "local_file" "ec2_key_pem" {
   directory_permission = "0700"
 }
 
+# ================================================================
+
+
+# ================================================================
+# Standalone EC2 Instance
 module "standalone_ec2" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "5.5.0"
@@ -378,3 +405,4 @@ module "standalone_ec2" {
     Name = "standalone-ec2"
   }
 }
+# ================================================================

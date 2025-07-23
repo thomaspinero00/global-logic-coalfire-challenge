@@ -4,7 +4,7 @@ variable "my_ip" {
 }
 
 variable "aws_region" {
-  description = "La región AWS donde desplegar los recursos"
+  description = "The AWS region where the resources will be deployed"
   type        = string
   default     = "us-east-1"
 }

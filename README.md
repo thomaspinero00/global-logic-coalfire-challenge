@@ -84,8 +84,8 @@ Requisitos:
 #### Clonar el repositorio
 
 ```
-git clone <TU_REPO_GITHUB>
-cd <repo>
+git clone https://github.com/thomaspinero00/global-logic-coalfire-challenge.git
+cd global-logic-coalfire-challenge
 ```
 
 #### Configurar tus variables
@@ -107,19 +107,16 @@ terraform plan
 
 ```
 terraform apply
-
 ```
 #### Acceder a la EC2
 
-Encontrá la IP pública en el output.
+Encontrá el comando para acceder via SSH en el output.
 
-Usá el key generado:
+Usá el comando generado:
 
 ```
 ssh -i "global-logic-key.pem" ec2-user@<EC2_PUBLIC_IP>
 ```
-
-
 
 
 
